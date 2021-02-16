@@ -1,6 +1,6 @@
 /*
- *  Copyright (c) 2018, INRIA
- *  Copyright (c) 2018, University of Lille
+ *  Copyright (c) 2021, INRIA
+ *  Copyright (c) 2021, University of Lille
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -29,71 +29,39 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-#include <strings.h>
+#ifndef STORAGE_SOCKET_H
+#define STORAGE_SOCKET_H
+
+#include <sys/socket.h>
+#include <netinet/in.h> 
 
 #include "storage.h"
+#include "config.h"
 
-const char *storage_types_name[] = {
-    [STORAGE_UNKNOWN] = "unknown",
-    [STORAGE_CSV] = "csv",
-    [STORAGE_SOCKET] = "socket",
-#ifdef HAVE_MONGODB
-    [STORAGE_MONGODB] = "mongodb",
-#endif
+
+/*
+ * socket_config stores the required information for the module.
+ */
+struct socket_config
+{
+    const char *sensor_name;
+    const char *address;
+    int port;
 };
 
-enum storage_type
-storage_module_get_type(const char *type_name)
+/*
+ * socket_context stores the context of the module.
+ */
+struct socket_context
 {
-    if (strcasecmp(type_name, storage_types_name[STORAGE_CSV]) == 0) {
-        return STORAGE_CSV;
-    }
+    struct socket_config config;
+    struct sockaddr_in address;
+    int socket;
+};
 
-    if (strcasecmp(type_name, storage_types_name[STORAGE_SOCKET]) == 0) {
-        return STORAGE_SOCKET;
-    }
+/*
+ * storage_socket_create creates and configure a socket storage module.
+ */
+struct storage_module *storage_socket_create(struct config *config);
 
-#ifdef HAVE_MONGODB
-    if (strcasecmp(type_name, storage_types_name[STORAGE_MONGODB]) == 0) {
-        return STORAGE_MONGODB;
-    }
-#endif
-
-    return STORAGE_UNKNOWN;
-}
-
-int
-storage_module_initialize(struct storage_module *module)
-{
-    return (*module->initialize)(module);
-}
-
-int
-storage_module_ping(struct storage_module *module)
-{
-    return (*module->ping)(module);
-}
-
-int
-storage_module_store_report(struct storage_module *module, struct payload *payload)
-{
-    return (*module->store_report)(module, payload);
-}
-
-int
-storage_module_deinitialize(struct storage_module *module)
-{
-    return (*module->deinitialize)(module);
-}
-
-void
-storage_module_destroy(struct storage_module *module)
-{
-    if (!module)
-        return;
-
-    (*module->destroy)(module);
-    free(module);
-}
-
+#endif /* STORAGE_SOCKET_H */
